@@ -11,6 +11,7 @@ import {
 } from "./service/mockServer"
 import { CircularProgress, SnackbarContent } from "@mui/material"
 import { ThumbUp } from "@mui/icons-material"
+import { SubmissionTable } from "./components/SubmissionTable"
 
 export default function Content() {
   const [isToastOpen, setIsToastOpen] = React.useState(false)
@@ -148,10 +149,6 @@ export default function Content() {
       <Typography variant="h4">Liked Form Submissions</Typography>
       <Typography variant="body1" sx={{ fontStyle: "italic", marginTop: 1 }}>
         {fetchError?.message && fetchError.message}
-        {isFetchingLikedSubmissions && <CircularProgress />}
-        {likedSubmissions.length > 0 && (
-          <pre>{JSON.stringify(likedSubmissions, null, 2)}</pre>
-        )}
         {!fetchError &&
           likedSubmissions.length === 0 &&
           !isFetchingLikedSubmissions && (
@@ -160,6 +157,10 @@ export default function Content() {
             </Typography>
           )}
       </Typography>
+      <SubmissionTable
+        isFetchingLikedSubmissions={isFetchingLikedSubmissions}
+        likedSubmissions={likedSubmissions}
+      />
     </Box>
   )
 }
