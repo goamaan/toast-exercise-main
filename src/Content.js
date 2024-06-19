@@ -9,9 +9,10 @@ import {
   onMessage,
   saveLikedFormSubmission,
 } from "./service/mockServer"
-import { CircularProgress, SnackbarContent } from "@mui/material"
+import { Button, CircularProgress, SnackbarContent } from "@mui/material"
 import { ThumbUp } from "@mui/icons-material"
 import { SubmissionTable } from "./components/SubmissionTable"
+import { errorMessage } from "./utils"
 
 export default function Content() {
   const [isToastOpen, setIsToastOpen] = React.useState(false)
@@ -38,8 +39,8 @@ export default function Content() {
       return
     }
 
-    setFormSubmission({})
     setIsToastOpen(false)
+    setFormSubmission({})
   }
 
   const handleLike = async () => {
@@ -55,8 +56,8 @@ export default function Content() {
     } catch (e) {
       console.error(e)
       setLikeError(e)
-      setFormSubmission({})
       setIsLikeLoading(false)
+      setFormSubmission({})
     }
   }
 
@@ -66,6 +67,7 @@ export default function Content() {
       const res = await fetchLikedFormSubmissions()
       setLikedSubmissions(res.formSubmissions)
       setIsFetchingLikedSubmissions(false)
+      setFetchError(null)
     } catch (e) {
       console.error(e)
       setFetchError(e)
@@ -129,16 +131,22 @@ export default function Content() {
     </Box>
   ) : likeError ? (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography sx={{ fontStyle: "italic" }}>{likeError.message}</Typography>
+      <Typography sx={{ fontStyle: "italic" }}>
+        {errorMessage(likeError.message)}
+      </Typography>
     </Box>
   ) : (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography sx={{ fontStyle: "italic" }}>No form submission</Typography>
-    </Box>
+    <></>
   )
 
   return (
-    <Box sx={{ marginTop: 3 }}>
+    <Box
+      sx={{ marginTop: 3 }}
+      display={"flex"}
+      flexDirection={"column"}
+      alignItems={"center"}
+      justifyContent={"center"}
+    >
       <Snackbar
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         open={isToastOpen}
@@ -147,8 +155,13 @@ export default function Content() {
         <SnackbarContent message={toastMessageContent} action={action} />
       </Snackbar>
       <Typography variant="h4">Liked Form Submissions</Typography>
-      <Typography variant="body1" sx={{ fontStyle: "italic", marginTop: 1 }}>
-        {fetchError?.message && fetchError.message}
+      <Typography
+        variant="body1"
+        align="center"
+        sx={{ fontStyle: "italic", marginTop: 1 }}
+      >
+        {fetchError?.message && errorMessage(fetchError.message)}
+        {/* Retry button */}
         {!fetchError &&
           likedSubmissions.length === 0 &&
           !isFetchingLikedSubmissions && (
@@ -157,6 +170,15 @@ export default function Content() {
             </Typography>
           )}
       </Typography>
+      {fetchError && !isFetchingLikedSubmissions && (
+        <Button
+          variant="contained"
+          onClick={fetchLikedSubmissions}
+          sx={{ marginTop: 1 }}
+        >
+          Retry
+        </Button>
+      )}
       <SubmissionTable
         isFetchingLikedSubmissions={isFetchingLikedSubmissions}
         likedSubmissions={likedSubmissions}
