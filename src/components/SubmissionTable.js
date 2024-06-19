@@ -8,8 +8,8 @@ import Paper from "@mui/material/Paper"
 import { CircularProgress } from "@mui/material"
 
 export function SubmissionTable({
-  likedSubmissions,
-  isFetchingLikedSubmissions,
+  likedSubmissions = [],
+  isFetchingLikedSubmissions = false,
 }) {
   return (
     <TableContainer component={Paper}>
@@ -34,6 +34,13 @@ export function SubmissionTable({
               <TableCell align="right">{row.data.email}</TableCell>
             </TableRow>
           ))}
+          {likedSubmissions.length === 0 && !isFetchingLikedSubmissions && (
+            <TableRow>
+              <TableCell colSpan={3} align="center">
+                No liked submissions
+              </TableCell>
+            </TableRow>
+          )}
           {isFetchingLikedSubmissions && (
             <TableRow>
               <TableCell colSpan={3} align="center">

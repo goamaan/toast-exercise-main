@@ -9,7 +9,7 @@ import {
   onMessage,
   saveLikedFormSubmission,
 } from "./service/mockServer"
-import { Button, CircularProgress, SnackbarContent } from "@mui/material"
+import { Alert, Button, CircularProgress, SnackbarContent } from "@mui/material"
 import { ThumbUp } from "@mui/icons-material"
 import { SubmissionTable } from "./components/SubmissionTable"
 import { errorMessage } from "./utils"
@@ -34,12 +34,13 @@ export default function Content() {
     }
   }
 
-  const handleClose = (event, reason) => {
+  const handleClose = (_event, reason) => {
     if (reason === "clickaway") {
       return
     }
 
     setIsToastOpen(false)
+    setLikeError(null)
     setFormSubmission({})
   }
 
@@ -155,21 +156,10 @@ export default function Content() {
         <SnackbarContent message={toastMessageContent} action={action} />
       </Snackbar>
       <Typography variant="h4">Liked Form Submissions</Typography>
-      <Typography
-        variant="body1"
-        align="center"
-        sx={{ fontStyle: "italic", marginTop: 1 }}
-      >
-        {fetchError?.message && errorMessage(fetchError.message)}
-        {/* Retry button */}
-        {!fetchError &&
-          likedSubmissions.length === 0 &&
-          !isFetchingLikedSubmissions && (
-            <Typography sx={{ fontStyle: "italic" }}>
-              No liked submissions
-            </Typography>
-          )}
-      </Typography>
+      {fetchError && (
+        <Alert severity="error">{errorMessage(fetchError.message)}</Alert>
+      )}
+      {/* Retry button */}
       {fetchError && !isFetchingLikedSubmissions && (
         <Button
           variant="contained"
