@@ -1,3 +1,7 @@
+# Brief Writeup
+
+See [WRITEUP](WRITEUP.md) for a brief explanation of my solution
+
 # Toast Exercise
 
 Welcome to the toast exercise! We just got a new project from the Product team to implement

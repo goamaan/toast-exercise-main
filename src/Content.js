@@ -87,7 +87,11 @@ export default function Content() {
       })
     } catch (e) {
       console.error(e)
-      setFetchState({ isFetching: false, likedSubmissions: [], error: e })
+      setFetchState((prevState) => ({
+        ...prevState,
+        isFetching: false,
+        error: e,
+      }))
     }
   }
 
@@ -99,6 +103,7 @@ export default function Content() {
   // register the callback handler
   onMessage(handleSubmission)
 
+  // on error likeState, show retry button
   const action = likeState.error ? (
     <Box display={"flex"} gap={1} alignItems={"center"}>
       {likeState.isLoading ? (
@@ -148,6 +153,7 @@ export default function Content() {
     </Box>
   )
 
+  // show error message or form submission
   const toastMessageContent = likeState.error ? (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Typography sx={{ fontStyle: "italic" }}>
