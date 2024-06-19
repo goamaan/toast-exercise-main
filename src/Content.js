@@ -15,22 +15,28 @@ import { SubmissionTable } from "./components/SubmissionTable"
 import { errorMessage } from "./utils"
 
 export default function Content() {
-  const [isToastOpen, setIsToastOpen] = React.useState(false)
+  const [toastState, setToastState] = React.useState({
+    isOpen: false,
+    formSubmission: {},
+  })
 
-  const [isFetchingLikedSubmissions, setIsFetchingLikedSubmissions] =
-    React.useState(false)
-  const [likedSubmissions, setLikedSubmissions] = React.useState([])
-  const [fetchError, setFetchError] = React.useState(null)
+  const [fetchState, setFetchState] = React.useState({
+    isFetching: false,
+    likedSubmissions: [],
+    error: null,
+  })
 
-  const [isLikeLoading, setIsLikeLoading] = React.useState(false)
-  const [likeError, setLikeError] = React.useState(null)
-
-  const [formSubmission, setFormSubmission] = React.useState({})
+  const [likeState, setLikeState] = React.useState({
+    isLoading: false,
+    error: null,
+  })
 
   const handleSubmission = (submission) => {
     if (submission?.id) {
-      setFormSubmission(submission)
-      setIsToastOpen(true)
+      setToastState({
+        isOpen: true,
+        formSubmission: submission,
+      })
     }
   }
 
@@ -39,40 +45,49 @@ export default function Content() {
       return
     }
 
-    setIsToastOpen(false)
-    setLikeError(null)
-    setFormSubmission({})
+    setToastState((prevState) => ({
+      ...prevState,
+      isOpen: false,
+      formSubmission: {},
+    }))
+    setLikeState((prevState) => ({ ...prevState, error: null }))
   }
 
   const handleLike = async () => {
-    setIsLikeLoading(true)
+    setLikeState((prevState) => ({ ...prevState, isLoading: true }))
     try {
-      await saveLikedFormSubmission(formSubmission)
-      setIsLikeLoading(false)
-      setIsToastOpen(false)
-      setFormSubmission({})
+      await saveLikedFormSubmission(toastState.formSubmission)
+      setLikeState((prevState) => ({
+        ...prevState,
+        isLoading: false,
+        error: null,
+      }))
+      setToastState((prevState) => ({
+        ...prevState,
+        isOpen: false,
+        formSubmission: {},
+      }))
 
       // refetch liked submissions
       await fetchLikedSubmissions()
     } catch (e) {
       console.error(e)
-      setLikeError(e)
-      setIsLikeLoading(false)
-      setFormSubmission({})
+      setLikeState({ isLoading: false, error: e })
     }
   }
 
   const fetchLikedSubmissions = async () => {
-    setIsFetchingLikedSubmissions(true)
+    setFetchState((prevState) => ({ ...prevState, isFetching: true }))
     try {
       const res = await fetchLikedFormSubmissions()
-      setLikedSubmissions(res.formSubmissions)
-      setIsFetchingLikedSubmissions(false)
-      setFetchError(null)
+      setFetchState({
+        isFetching: false,
+        likedSubmissions: res.formSubmissions,
+        error: null,
+      })
     } catch (e) {
       console.error(e)
-      setFetchError(e)
-      setIsFetchingLikedSubmissions(false)
+      setFetchState({ isFetching: false, likedSubmissions: [], error: e })
     }
   }
 
@@ -84,8 +99,20 @@ export default function Content() {
   // register the callback handler
   onMessage(handleSubmission)
 
-  const action = likeError ? (
-    <Box>
+  const action = likeState.error ? (
+    <Box display={"flex"} gap={1} alignItems={"center"}>
+      {likeState.isLoading ? (
+        <CircularProgress size={20} />
+      ) : (
+        <Button
+          size="small"
+          aria-label="close"
+          color="warning"
+          onClick={handleLike}
+        >
+          Retry Like
+        </Button>
+      )}
       <IconButton
         size="small"
         aria-label="close"
@@ -97,7 +124,7 @@ export default function Content() {
     </Box>
   ) : (
     <Box>
-      {isLikeLoading ? (
+      {likeState.isLoading ? (
         <CircularProgress size={20} />
       ) : (
         <IconButton
@@ -121,19 +148,20 @@ export default function Content() {
     </Box>
   )
 
-  const toastMessageContent = formSubmission.id ? (
+  const toastMessageContent = likeState.error ? (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography sx={{ fontWeight: "bold" }}>
-        {formSubmission.data.firstName} {formSubmission.data.lastName}
-      </Typography>
       <Typography sx={{ fontStyle: "italic" }}>
-        {formSubmission.data.email}
+        {errorMessage(likeState.error.message)}
       </Typography>
     </Box>
-  ) : likeError ? (
+  ) : toastState.formSubmission.id ? (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Typography sx={{ fontWeight: "bold" }}>
+        {toastState.formSubmission.data.firstName}{" "}
+        {toastState.formSubmission.data.lastName}
+      </Typography>
       <Typography sx={{ fontStyle: "italic" }}>
-        {errorMessage(likeError.message)}
+        {toastState.formSubmission.data.email}
       </Typography>
     </Box>
   ) : (
@@ -142,7 +170,7 @@ export default function Content() {
 
   return (
     <Box
-      sx={{ marginTop: 3 }}
+      sx={{ marginY: 3 }}
       display={"flex"}
       flexDirection={"column"}
       alignItems={"center"}
@@ -150,17 +178,17 @@ export default function Content() {
     >
       <Snackbar
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        open={isToastOpen}
+        open={toastState.isOpen}
         onClose={handleClose}
       >
         <SnackbarContent message={toastMessageContent} action={action} />
       </Snackbar>
       <Typography variant="h4">Liked Form Submissions</Typography>
-      {fetchError && (
-        <Alert severity="error">{errorMessage(fetchError.message)}</Alert>
+      {fetchState.error && (
+        <Alert severity="error">{errorMessage(fetchState.error.message)}</Alert>
       )}
       {/* Retry button */}
-      {fetchError && !isFetchingLikedSubmissions && (
+      {fetchState.error && !fetchState.isFetching && (
         <Button
           variant="contained"
           onClick={fetchLikedSubmissions}
@@ -170,8 +198,8 @@ export default function Content() {
         </Button>
       )}
       <SubmissionTable
-        isFetchingLikedSubmissions={isFetchingLikedSubmissions}
-        likedSubmissions={likedSubmissions}
+        isFetchingLikedSubmissions={fetchState.isFetching}
+        likedSubmissions={fetchState.likedSubmissions}
       />
     </Box>
   )
